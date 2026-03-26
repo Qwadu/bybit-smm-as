@@ -18,3 +18,15 @@ inventory_extreme: 0.5
 # Volatility settings
 bollinger_band_length: 20
 bollinger_band_std: 2.5
+
+# Avellaneda-Stoikov quoting engine parameters
+# gamma: risk aversion (0.01 = low risk aversion, 1.0 = high)
+as_gamma: 0.1
+# k: order book liquidity (higher = tighter spread)
+as_k: 1.5
+# T: time horizon in normalized units (1.0 = full session)
+as_T: 1.0
+# dt: time step (typically 1.0)
+as_dt: 1.0
+# vol_window: rolling window size for volatility estimation
+as_vol_window: 100
