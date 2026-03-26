@@ -1,0 +1,22 @@
+[Unit]
+Description=Bybit SMM Avellaneda-Stoikov Market Making Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/bybit-smm-as
+EnvironmentFile=/home/ubuntu/bybit-smm-as/.env
+ExecStart=/home/ubuntu/bybit-smm-as/venv/bin/python main.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target
