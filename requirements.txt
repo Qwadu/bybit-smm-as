@@ -1,4 +1,4 @@
-aiohttp==3.8.3
+bionhttp==3.8.3
 numba==0.59.0
 numpy==1.26.4
 orjson==3.9.1
@@ -10,8 +10,8 @@ python-dotenv==1.0.1
 urllib3==1.26.12
 uvloop==0.19.0
 websockets==10.3
-# mm-toolbox (Cython-accelerated HFT primitives)
-mm-toolbox>=1.0.0b3
+# mm-toolbox v1.1b (Cython-accelerated HFT primitives, installed from source in setup.sh)
 # build tools for Cython extensions
 Cython>=3.0
 setuptools>=68.0
+numpy_ringbuffer>=0.2.2
