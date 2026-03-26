@@ -6,9 +6,9 @@ from collections import deque
 from numpy_ringbuffer import RingBuffer
 from typing import Dict
 from numpy.typing import NDArray
-from src.exchanges.common.localorderbook import BaseOrderBook
-from src.exchanges.binance.websockets.handlers.orderbook import OrderBookBinance
+from mm_toolbox.orderbook import Orderbook, OrderbookLevel
 from src.exchanges.bybit.websockets.handlers.orderbook import OrderBookBybit
+from src.exchanges.binance.websockets.handlers.orderbook import OrderBookBinance
 
 
 class SharedState:
@@ -43,11 +43,22 @@ class SharedState:
         self.bybit_book = OrderBookBybit()
         self.bybit_mark_price = 0
 
+        # mm_toolbox Orderbook (initialized after tick/lot sizes are known)
+        self._bybit_ob: Orderbook | None = None
+
         # Other shared attributes
         self.current_orders = {}
         self.execution_feed = deque(maxlen=100)
         self.volatility_value = 0
         self.inventory_delta = 0
+
+    def init_mm_orderbook(self) -> None:
+        """Initialize mm_toolbox Orderbook once tick/lot sizes are available."""
+        self._bybit_ob = Orderbook(
+            tick_size=self.bybit_tick_size,
+            lot_size=self.bybit_lot_size,
+            size=500,
+        )
 
     def _load_settings_(self, settings: Dict, reload: bool=False) -> None:
         """Updates trading parameters and settings from a dictionary of settings."""
@@ -101,14 +112,21 @@ class SharedState:
 
     @property
     def bybit_mid(self) -> float:
+        # Use mm_toolbox Orderbook if available, else fallback to BBA
+        if self._bybit_ob is not None and self._bybit_ob._is_populated:
+            return self._bybit_ob.get_mid_price()
         return self.calculate_mid(self.bybit_bba)
 
     @property
     def bybit_wmid(self) -> float:
+        if self._bybit_ob is not None and self._bybit_ob._is_populated:
+            return self._bybit_ob.get_wmid_price()
         return self.calculate_wmid(self.bybit_bba)
 
     @property
     def bybit_vamp(self) -> float:
+        if self._bybit_ob is not None and self._bybit_ob._is_populated:
+            return self._bybit_ob.get_volume_weighted_mid_price(self.account_size)
         return self.calculate_vamp(self.bybit_book)
 
     @staticmethod
@@ -122,7 +140,7 @@ class SharedState:
         return bba[1][0] * imb + bba[0][0] * (1 - imb)
 
     @staticmethod
-    def calculate_vamp(book: BaseOrderBook, depth=10) -> float:
+    def calculate_vamp(book, depth=10) -> float:
         bids_qty_sum = sum(bid[1] for bid in book.bids[:depth])
         asks_qty_sum = sum(ask[1] for ask in book.asks[:depth])
         bid_fair = sum(bid[0] * (bid[1] / bids_qty_sum) for bid in book.bids[:depth])
